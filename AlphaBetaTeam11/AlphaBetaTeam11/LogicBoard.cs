@@ -150,7 +150,7 @@ namespace Othello
             return hit;
         }
         
-        public bool isPlayable(int column, int line, bool isWhite)
+        public bool IsPlayable(int column, int line, bool isWhite)
         {
             //Position empty ?
             if (Board[line,column] != null)
@@ -173,7 +173,7 @@ namespace Othello
             return found;
         }
 
-        public bool playMove(int column, int line, bool isWhite)
+        public bool PlayMove(int column, int line, bool isWhite)
         {
             var color = isWhite ? Pawn.Colors.White : Pawn.Colors.Black;
 
@@ -197,12 +197,12 @@ namespace Othello
             throw new NotImplementedException();
         }
         
-        public int getWhiteScore() => (from pawn in Board.Cast<Pawn>()
+        public int GetWhiteScore() => (from pawn in Board.Cast<Pawn>()
                                         where pawn?.Color == Pawn.Colors.White
                                         select pawn).Count();
         
 
-        public int getBlackScore() => (from pawn in Board.Cast<Pawn>()
+        public int GetBlackScore() => (from pawn in Board.Cast<Pawn>()
                                        where pawn?.Color == Pawn.Colors.Black
                                        select pawn).Count();
 
@@ -232,16 +232,6 @@ namespace Othello
             throw new NotImplementedException();
         }
 
-        public bool IsPlayable(int column, int line, bool isWhite)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool PlayMove(int column, int line, bool isWhite)
-        {
-            throw new NotImplementedException();
-        }
-
         public Tuple<int, int> GetNextMove(int[,] game, int level, bool whiteTurn)
         {
             throw new NotImplementedException();
@@ -252,14 +242,55 @@ namespace Othello
             throw new NotImplementedException();
         }
 
-        public int GetWhiteScore()
+        public class TreeNode
         {
-            throw new NotImplementedException();
+            public double eval()
+            {
+                return 0;
+            }
+
+            public bool final()
+            {
+                return false;
+            }
+
+            public TreeNode[] ops()
+            {
+                return null;
+            }
+
+            public TreeNode apply(TreeNode op)
+            {
+                return null;
+            }
+            
         }
 
-        public int GetBlackScore()
+        public Tuple<double, TreeNode> alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
         {
-            throw new NotImplementedException();
+            if( depth == 0 || root.final())
+                return new Tuple<double, TreeNode>(root.eval(), null);
+
+            var optVal = minOrMax*-int.MaxValue;
+            TreeNode optOp = null;
+
+            foreach (var op in root.ops())
+            {
+                var newOp = root.apply(op);
+                var val = alphabeta(newOp, depth - 1, -minOrMax, optVal).Item1;
+                if (val*minOrMax > optVal*minOrMax)
+                {
+                    optVal = val;
+                    optOp = op;
+
+                    if (optVal*minOrMax > parentValue*minOrMax)
+                        break;
+                }
+            }
+
+            return new Tuple<double, TreeNode>(optVal,optOp);
         }
+
+
     }
 }

@@ -10,6 +10,7 @@ namespace AlphaBetaTeam11
     {
         static void Main(string[] args)
         {
+            new Program();
         }
     }
 }
