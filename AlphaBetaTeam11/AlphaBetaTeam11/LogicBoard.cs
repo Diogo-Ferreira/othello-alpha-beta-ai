@@ -250,22 +250,70 @@ namespace Othello
 
             public double eval()
             {
-                int maxCoin = 0;//Les pions les plus présents
+                double mobility = 0;
+
+                int maxCoin = 0;//Les pions les plus présents->devient le maxPlayer
                 int minCoin = 0;
 
-                if(board.GetBlackScore() > board.GetWhiteScore())
+                int maxMobility = 0;//Regarde combien de mouvement sont possibles.
+                int minMobility = 0;
+
+                if (board.GetBlackScore() > board.GetWhiteScore())//Black est max
                 {
                     maxCoin = board.GetBlackScore();
                     minCoin = board.GetWhiteScore();
+
+                    for (int i = 0; i < 8; i++)
+                    {
+                        for (int j = 0; j < 8; j++)
+                        {
+                            if (board.IsPlayable(i, j, false))//On regarde les noirs
+                            {
+                                maxMobility++;
+                            }
+                            else if (board.IsPlayable(i, j, true))
+                            {
+                                minMobility++;
+                            }
+                        }
+                    }
                 }
                 else
                 {
                     maxCoin = board.GetWhiteScore();
                     minCoin = board.GetBlackScore();
+
+                    for (int i = 0; i < 8; i++)
+                    {
+                        for (int j = 0; j < 8; j++)
+                        {
+                            if (board.IsPlayable(i, j, false))//On regarde les noirs
+                            {
+                                minMobility++;
+                            }
+                            else if (board.IsPlayable(i, j, true))
+                            {
+                                maxMobility++;
+                            }
+                        }
+                    }
                 }
                 //Parity
                 double parity = 100 * (maxCoin-minCoin) / (maxCoin-minCoin);
-                return parity;
+                //Mobility
+                if (maxMobility + minMobility != 0)
+                {
+                    mobility = 100 * (maxMobility - minMobility) / (maxMobility + minMobility);
+                }
+                else
+                {
+                    mobility = 0;
+                }
+                //Corners captured
+                //Stability
+                //Score from : https://github.com/kartikkukreja/blog-codes/blob/master/src/Heuristic%20Function%20for%20Reversi%20(Othello).cpp
+                double score = (10 * parity) + (78.922 * mobility);
+                return score;
             }
 
             public bool final()
