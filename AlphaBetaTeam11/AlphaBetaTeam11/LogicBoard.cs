@@ -290,7 +290,5 @@ namespace Othello
 
             return new Tuple<double, TreeNode>(optVal,optOp);
         }
-
-
     }
 }
