@@ -15,6 +15,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using OthelloIA2;
 
 namespace ConsoleTestDLLOthello
 {
@@ -105,7 +106,7 @@ namespace ConsoleTestDLLOthello
             else // b) add a reference to your class assembly in the project and instantiate it 
             {
                 player1 = new OthelloIA2.OthelloBoard();   // for example
-                player2 = new OthelloIA2.OthelloBoard();   // for example
+                player2 = new AlphaBetaTeam11Library.LogicBoard();   // for example
             }
             // The Game controller
             serverController = new OthelloLib.Board();             //reference interne au projet
