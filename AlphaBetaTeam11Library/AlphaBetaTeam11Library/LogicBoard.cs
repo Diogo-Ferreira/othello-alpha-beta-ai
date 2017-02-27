@@ -251,12 +251,16 @@ namespace AlphaBetaTeam11Library
             public double eval()
             {
                 double mobility = 0;
+                double corner = 0;
 
-                int maxCoin = 0;//Les pions les plus présents->devient le maxPlayer
-                int minCoin = 0;
+                double maxCoin = 0;//Les pions les plus présents->devient le maxPlayer
+                double minCoin = 0;
 
-                int maxMobility = 0;//Regarde combien de mouvement sont possibles.
-                int minMobility = 0;
+                double maxMobility = 0;//Regarde combien de mouvement sont possibles.
+                double minMobility = 0;
+
+                double maxCorner = 0;//Regarde le nombre de coins
+                double minCorner = 0;
 
                 if (board.GetBlackScore() > board.GetWhiteScore())//Black est max
                 {
@@ -276,6 +280,39 @@ namespace AlphaBetaTeam11Library
                                 minMobility++;
                             }
                         }
+                    }
+                    //Etude des coins
+                    if (board.Board[0, 0].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    else if (!board.Board[0, 0].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    if (board.Board[0, 7].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    else if (!board.Board[0, 7].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    if (board.Board[7, 0].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    else if (!board.Board[7, 0].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    if (board.Board[7, 7].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    else if (!board.Board[7, 7].IsWhite)
+                    {
+                        maxCorner++;
                     }
                 }
                 else
@@ -297,6 +334,40 @@ namespace AlphaBetaTeam11Library
                             }
                         }
                     }
+
+                    //Coins
+                    if (board.Board[0, 0].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    else if (!board.Board[0, 0].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    if (board.Board[0, 7].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    else if (!board.Board[0, 7].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    if (board.Board[7, 0].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    else if (!board.Board[7, 0].IsWhite)
+                    {
+                        minCorner++;
+                    }
+                    if (board.Board[7, 7].IsWhite)
+                    {
+                        maxCorner++;
+                    }
+                    else if (!board.Board[7, 7].IsWhite)
+                    {
+                        minCorner++;
+                    }
                 }
                 //Parity
                 double parity = 100 * (maxCoin - minCoin) / (maxCoin - minCoin);
@@ -310,9 +381,17 @@ namespace AlphaBetaTeam11Library
                     mobility = 0;
                 }
                 //Corners captured
+                if (maxCorner + minCorner != 0)
+                {
+                    corner = 100 * (maxCorner - minCorner) / (maxCorner + minCorner);
+                }
+                else
+                {
+                    corner = 0;
+                }
                 //Stability
                 //Score from : https://github.com/kartikkukreja/blog-codes/blob/master/src/Heuristic%20Function%20for%20Reversi%20(Othello).cpp
-                double score = (10 * parity) + (78.922 * mobility);
+                double score = (10 * parity) + (78.922 * mobility) + (801.724 * corner);
                 return score;
             }
 
