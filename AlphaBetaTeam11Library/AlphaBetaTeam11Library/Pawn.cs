@@ -72,7 +72,7 @@ namespace AlphaBetaTeam11Library
 
         public enum Colors {White, Black};
 
-        Colors color;
+        public Colors color;
         
         /// <summary>
         /// Constructeur avec paramètres
@@ -111,6 +111,12 @@ namespace AlphaBetaTeam11Library
             pos = (Direction)info.GetValue("Direction", typeof(Direction));
             color = (Colors)info.GetValue("Colors", typeof(Colors));
         }
+
+        public Pawn()
+        {
+        }
+
+
         /// <summary>
         /// Méthode permettant la sérialisation d'un pion, vient de ISerializable
         /// </summary>

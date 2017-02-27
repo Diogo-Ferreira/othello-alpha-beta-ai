@@ -105,7 +105,7 @@ namespace ConsoleTestDLLOthello
             }
             else // b) add a reference to your class assembly in the project and instantiate it 
             {
-                player1 = new OthelloIA2.OthelloBoard();   // for example
+                player1 = new AlphaBetaTeam11Library.LogicBoard();   // for example
                 player2 = new AlphaBetaTeam11Library.LogicBoard();   // for example
             }
             // The Game controller
@@ -191,7 +191,7 @@ namespace ConsoleTestDLLOthello
                 whitePlays = !whitePlays;
                 activePlayer = (activePlayer == player1) ? player2 : player1;
                 
-                System.Threading.Thread.Sleep(200); // slow down game speed or //Console.ReadKey();
+                System.Threading.Thread.Sleep(2000); // slow down game speed or //Console.ReadKey();
             } // end of GAMELOOP
             #endregion
 

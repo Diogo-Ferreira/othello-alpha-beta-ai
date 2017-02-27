@@ -44,7 +44,10 @@ namespace AlphaBetaTeam11Library
         /// <summary>
         /// Constructeur vide pour la sérialisation
         /// </summary>
-        public LogicBoard(){}
+        public LogicBoard()
+        {
+            fillBoard();
+        }
 
 
         /// <summary>
@@ -192,10 +195,6 @@ namespace AlphaBetaTeam11Library
             return false;
         }
 
-        public Tuple<char, int> getNextMove(int[,] game, int level, bool whiteTurn)
-        {
-            throw new NotImplementedException();
-        }
         
         public int GetWhiteScore() => (from pawn in Board.Cast<Pawn>()
                                         where pawn?.Color == Pawn.Colors.White
@@ -229,18 +228,50 @@ namespace AlphaBetaTeam11Library
 
         public string GetName()
         {
-            throw new NotImplementedException();
+            return "Alpha Beta AI elle as dit patate ^^'";
         }
 
         public Tuple<int, int> GetNextMove(int[,] game, int level, bool whiteTurn)
         {
-            throw new NotImplementedException();
+            for (var i = 0; i < HEIGHT; i++)
+            {
+                for (var j = 0; j < WIDTH; j++)
+                {
+                    if (game[i, j] != -1)
+                    {
+                        var pawn = new Pawn
+                        {
+                            pos = new Pawn.Direction(j, i),
+                            color = game[i, j] == 0 ? Pawn.Colors.White : Pawn.Colors.Black
+                        };
+
+                        Board[i, j] = pawn;
+                    }
+                    else
+                    {
+                        Board[i, j] = null;
+                    }
+                }
+            }
+
+            return null;
         }
 
         public int[,] GetBoard()
         {
+            var outBoard = new int[WIDTH, HEIGHT];
 
+            for (var i = 0; i < HEIGHT; i++)
+            {
+                for (var j = 0; j < WIDTH; j++)
+                {
+                    outBoard[i, j] = Board[i, j] == null ? -1 : Board[i, j].IsWhite ? 0 : 1;
+                }
+            }
+
+            return outBoard;
         }
+        
 
         public class TreeNode
         {
