@@ -244,9 +244,28 @@ namespace Othello
 
         public class TreeNode
         {
+            public int x;
+            public int y;
+            public LogicBoard board;
+
             public double eval()
             {
-                return 0;
+                int maxCoin = 0;//Les pions les plus présents
+                int minCoin = 0;
+
+                if(board.GetBlackScore() > board.GetWhiteScore())
+                {
+                    maxCoin = board.GetBlackScore();
+                    minCoin = board.GetWhiteScore();
+                }
+                else
+                {
+                    maxCoin = board.GetWhiteScore();
+                    minCoin = board.GetBlackScore();
+                }
+                //Parity
+                double parity = 100 * (maxCoin-minCoin) / (maxCoin-minCoin);
+                return parity;
             }
 
             public bool final()
