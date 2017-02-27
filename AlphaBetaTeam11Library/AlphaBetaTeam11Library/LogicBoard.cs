@@ -239,7 +239,7 @@ namespace AlphaBetaTeam11Library
 
         public int[,] GetBoard()
         {
-            throw new NotImplementedException();
+
         }
 
         public class TreeNode
