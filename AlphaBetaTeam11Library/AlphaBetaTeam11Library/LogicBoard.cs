@@ -24,7 +24,7 @@ namespace AlphaBetaTeam11Library
         ///<summary>
         /// Board logic du jeu, si case vide null
         /// </summary>
-        public Pawn[,] Board { get; set; } = new Pawn[WIDTH, HEIGHT];
+        private Pawn[,] Board { get; } = new Pawn[WIDTH, HEIGHT];
 
         /// <summary>
         ///  Directions prédéfinis des recherches
@@ -153,7 +153,7 @@ namespace AlphaBetaTeam11Library
             return hit;
         }
         
-        public bool IsPlayable(int column, int line, bool isWhite)
+        public bool IsPlayable(int line, int column, bool isWhite)
         {
             //Position empty ?
             if (Board[line,column] != null)
@@ -176,7 +176,7 @@ namespace AlphaBetaTeam11Library
             return found;
         }
 
-        public bool PlayMove(int column, int line, bool isWhite)
+        public bool PlayMove(int line, int column, bool isWhite)
         {
             var color = isWhite ? Pawn.Colors.White : Pawn.Colors.Black;
 
@@ -254,7 +254,25 @@ namespace AlphaBetaTeam11Library
                 }
             }
 
-            return null;
+            var root = new TreeNode()
+            {
+                board = this,
+                IsWhite = whiteTurn
+            };
+
+            var result = alphabeta(root, level, 1, -int.MaxValue);
+
+
+            if (result.Item2 != null)
+            {
+                return new Tuple<int, int>(result.Item2.pawn.pos.y, result.Item2.pawn.pos.x);
+            }
+            else
+            {
+                return new Tuple<int, int>(-1,-1);
+            }
+           
+           
         }
 
         public int[,] GetBoard()
@@ -275,185 +293,106 @@ namespace AlphaBetaTeam11Library
 
         public class TreeNode
         {
-            public int x;
-            public int y;
+            public Pawn pawn;
             public LogicBoard board;
+            public bool IsWhite;
 
-            public double eval()
+            public readonly int[,] theMatrix = {
+                { 30, -25, 10, 5, 5, 10, -25, 30, },
+                {-25, -25,  1, 1, 1,  1, -25, -25,},
+                { 10,   1,  5, 2, 2,  5,   1,  10,},
+                {  5,   1,  2, 1, 1,  2,   1,   5,},
+                {  5,   1,  2, 1, 1,  2,   1,   5,},
+                { 10,   1,  5, 2, 2,  5,   1,  10,},
+                {-25, -25,  1, 1, 1,  1, -25, -25,},
+                { 30, -25, 10, 5, 5, 10, -25,  30,}
+            };
+
+            public double Eval()
             {
-                double mobility = 0;
-                double corner = 0;
-
-                double maxCoin = 0;//Les pions les plus présents->devient le maxPlayer
-                double minCoin = 0;
-
-                double maxMobility = 0;//Regarde combien de mouvement sont possibles.
-                double minMobility = 0;
-
-                double maxCorner = 0;//Regarde le nombre de coins
-                double minCorner = 0;
-
-                if (board.GetBlackScore() > board.GetWhiteScore())//Black est max
+                var earlyGame = (board.GetBlackScore() + board.GetWhiteScore() < 40);
+                var countGoodness = 0.0;
+                var K1 = 1;
+                var K2 = 1.5;
+                var K3 = 2;
+                if (earlyGame)
                 {
-                    maxCoin = board.GetBlackScore();
-                    minCoin = board.GetWhiteScore();
+                    // give-away in the early game
+                    countGoodness = K1*((IsWhite ? board.GetBlackScore() : board.GetWhiteScore()) - (IsWhite ? board.GetWhiteScore() : board.GetBlackScore()));
+                }
+                else
+                {
+                    // take-back later in the game
+                    countGoodness = K2 * ((IsWhite ? board.GetWhiteScore() : board.GetBlackScore()) - (IsWhite ? board.GetBlackScore() : board.GetWhiteScore()));
+                }
+                var positionalGoodness = K3 * theMatrix[pawn.pos.y,pawn.pos.x];
 
-                    for (int i = 0; i < 8; i++)
+                return countGoodness + positionalGoodness;
+            }
+
+            public bool Final()
+            {
+                return board.GetWhiteScore() + board.GetBlackScore() > board.Board.Length;
+            }
+
+            public TreeNode[] Ops()
+            {
+
+                var possiblePawns = new List<Pawn>();
+
+                for (var i = 0; i < HEIGHT; i++)
+                {
+                    for (var j = 0; j < WIDTH; j++)
                     {
-                        for (int j = 0; j < 8; j++)
+                        if (board.Board[i, j] == null && board.IsPlayable(j, i, IsWhite))
                         {
-                            if (board.IsPlayable(i, j, false))//On regarde les noirs
+                            possiblePawns.Add(new Pawn()
                             {
-                                maxMobility++;
-                            }
-                            else if (board.IsPlayable(i, j, true))
-                            {
-                                minMobility++;
-                            }
+                                pos = new Pawn.Direction(j,i),
+                                color = IsWhite ? Pawn.Colors.White : Pawn.Colors.Black
+                            });
                         }
                     }
-                    //Etude des coins
-                    if (board.Board[0, 0].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    else if (!board.Board[0, 0].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    if (board.Board[0, 7].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    else if (!board.Board[0, 7].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    if (board.Board[7, 0].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    else if (!board.Board[7, 0].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    if (board.Board[7, 7].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    else if (!board.Board[7, 7].IsWhite)
-                    {
-                        maxCorner++;
-                    }
                 }
-                else
-                {
-                    maxCoin = board.GetWhiteScore();
-                    minCoin = board.GetBlackScore();
 
-                    for (int i = 0; i < 8; i++)
-                    {
-                        for (int j = 0; j < 8; j++)
-                        {
-                            if (board.IsPlayable(i, j, false))//On regarde les noirs
-                            {
-                                minMobility++;
-                            }
-                            else if (board.IsPlayable(i, j, true))
-                            {
-                                maxMobility++;
-                            }
-                        }
-                    }
 
-                    //Coins
-                    if (board.Board[0, 0].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    else if (!board.Board[0, 0].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    if (board.Board[0, 7].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    else if (!board.Board[0, 7].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    if (board.Board[7, 0].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    else if (!board.Board[7, 0].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                    if (board.Board[7, 7].IsWhite)
-                    {
-                        maxCorner++;
-                    }
-                    else if (!board.Board[7, 7].IsWhite)
-                    {
-                        minCorner++;
-                    }
-                }
-                //Parity
-                double parity = 100 * (maxCoin - minCoin) / (maxCoin - minCoin);
-                //Mobility
-                if (maxMobility + minMobility != 0)
+                var ops = new List<TreeNode>();
+
+                possiblePawns.ForEach(p =>
                 {
-                    mobility = 100 * (maxMobility - minMobility) / (maxMobility + minMobility);
-                }
-                else
-                {
-                    mobility = 0;
-                }
-                //Corners captured
-                if (maxCorner + minCorner != 0)
-                {
-                    corner = 100 * (maxCorner - minCorner) / (maxCorner + minCorner);
-                }
-                else
-                {
-                    corner = 0;
-                }
-                //Stability
-                //Score from : https://github.com/kartikkukreja/blog-codes/blob/master/src/Heuristic%20Function%20for%20Reversi%20(Othello).cpp
-                double score = (10 * parity) + (78.922 * mobility) + (801.724 * corner);
-                return score;
+                    var treeNode = new TreeNode()
+                    {
+                        IsWhite = IsWhite,
+                        pawn = p,
+                        board = board
+                    };
+                    ops.Add(treeNode);
+                });
+
+                return ops.ToArray();
+
             }
 
-            public bool final()
+            public TreeNode Apply(TreeNode op)
             {
-                return false;
-            }
-
-            public TreeNode[] ops()
-            {
-                return null;
-            }
-
-            public TreeNode apply(TreeNode op)
-            {
-                return null;
+                pawn = op.pawn;
+                IsWhite = op.IsWhite;
+                return this;
             }
             
         }
 
         public Tuple<double, TreeNode> alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
         {
-            if( depth == 0 || root.final())
-                return new Tuple<double, TreeNode>(root.eval(), null);
+            if( depth == 0 || root.Final())
+                return new Tuple<double, TreeNode>(root.Eval(), null);
 
             var optVal = minOrMax*-int.MaxValue;
             TreeNode optOp = null;
 
-            foreach (var op in root.ops())
+            foreach (var op in root.Ops())
             {
-                var newOp = root.apply(op);
+                var newOp = root.Apply(op);
                 var val = alphabeta(newOp, depth - 1, -minOrMax, optVal).Item1;
                 if (val*minOrMax > optVal*minOrMax)
                 {
