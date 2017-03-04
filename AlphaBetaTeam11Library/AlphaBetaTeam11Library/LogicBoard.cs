@@ -25,6 +25,7 @@ namespace AlphaBetaTeam11Library
         public static int HEIGHT => 8;
 
 
+        //For debug
         List<string> history = new List<string>();
 
         ///<summary>
@@ -275,194 +276,37 @@ namespace AlphaBetaTeam11Library
 
             return outBoard;
         }
-        
 
-        public class TreeNode
-        {
-            public Pawn move;
-            public LogicBoard NodeBoard;
-            public bool IsWhite;
-            public bool IsRoot = false;
-
-            /*readonly int[,] theMatrix = {
-                { 30, -25, 10, 5, 5, 10, -25, 30, },
-                {-25, -25,  1, 1, 1,  1, -25, -25,},
-                { 10,   1,  5, 2, 2,  5,   1,  10,},
-                {  5,   1,  2, 1, 1,  2,   1,   5,},
-                {  5,   1,  2, 1, 1,  2,   1,   5,},
-                { 10,   1,  5, 2, 2,  5,   1,  10,},
-                {-25, -25,  1, 1, 1,  1, -25, -25,},
-                { 30, -25, 10, 5, 5, 10, -25,  30,}
-            };*/
-
-            readonly int[,] theMatrix = {
-                { 100, -10, 11, 6, 6, 11, -10, 100, },
-                {-10, -20,  1, 2, 2,  1, -20, -10,},
-                { 10,   1,  5, 4, 4,  5,   1,  10,},
-                {  6,   2,  4, 2, 2,  4,   2,   6,},
-                {  6,   2,  4, 2, 2,  4,   2,   6,},
-                { 10,   1,  5, 4, 4,  5,   1,  10,},
-                {-10, -20,  1, 2, 2,  1, -20, -10,},
-                { 100, -10, 11, 6, 6, 11, -10,  100,}
-            };
-            public double Eval()
-            {
-                //var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
-                //var countGoodness = 0.0;
-                //const int K1 = 100;
-                //const int K2 = 100;
-                //const int K3 = 8;
-
-                var myMobility = PossibleMoves(IsWhite).Count;
-                var hisMobility = PossibleMoves(!IsWhite).Count;
-
-                var genMobility = 0;
-
-                try
-                {
-                    genMobility = 100*(myMobility - hisMobility)/(myMobility + hisMobility);
-                }
-                catch (DivideByZeroException e){}
-
-                //double parity = 100 * (maxCoin - minCoin) / (minCoin + maxCoin);
-                var parity = 0;
-                var blackScore = NodeBoard.GetBlackScore();
-                var whiteScore = NodeBoard.GetWhiteScore();
-                try
-                {
-
-                    parity = 100*
-                                 ((IsWhite ? whiteScore : blackScore) -
-                                  (IsWhite ? blackScore : whiteScore))
-                                 /
-                                 ((IsWhite ? whiteScore : blackScore) +
-                                  (IsWhite ? blackScore : whiteScore));
-                }
-                catch (DivideByZeroException e)
-                {}
-
-                /*if (earlyGame)
-                {
-                    // give-away in the early game
-                    countGoodness = K1 * ((IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()) - (IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()));
-                }
-                else
-                {
-                    // take-back later in the game
-                    countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
-                }
-                var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);*/
-                //Console.WriteLine(countGoodness + positionalGoodness);
-                //return new Random().Next(0, 100)*(move == null ? 0 : move.pos.x) +
-                //       new Random().Next(0, 100)*(move == null ? 0 : move.pos.y);
-                //return new Random().NextDouble()*countGoodness + positionalGoodness;
-                return (10 * parity) + (78.922 * genMobility) + (move == null ? 0 : 801.724* theMatrix[move.pos.y, move.pos.x]);
-                //return ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
-            }
-
-            public bool Final()
-            {
-                var possibleMoves = PossibleMoves(IsWhite).Count;
-                return possibleMoves == 0;
-            }
-
-            public List<Pawn> PossibleMoves(bool IsWhite)
-            {
-                var possiblePawns = new List<Pawn>();
-
-                for (var i = 0; i < HEIGHT; i++)
-                {
-                    for (var j = 0; j < WIDTH; j++)
-                    {
-                        if (NodeBoard.IsPlayable(j, i, IsWhite))
-                        {
-                            possiblePawns.Add(new Pawn()
-                            {
-                                pos = new Pawn.Direction
-                                {
-                                    x = j,
-                                    y = i
-                                },
-                                color = IsWhite ? Pawn.Colors.White : Pawn.Colors.Black
-                            });
-                        }
-                    }
-                }
-                return possiblePawns;
-            }
-
-            public TreeNode[] Ops()
-            {
-
-
-                var possibleMoves = PossibleMoves(IsWhite);
-
-                var ops = new TreeNode[possibleMoves.Count];
-                var i = 0;
-                possibleMoves.ForEach(p =>
-                {
-                    var treeNode = new TreeNode()
-                    {
-                        IsWhite = IsWhite,
-                        move = p,
-                        NodeBoard = NodeBoard,
-                        IsRoot = false
-                    };
-                    ops[i] = treeNode;
-                    i++;
-                });
-
-                return ops;
-
-            }
-
-            public TreeNode Apply(TreeNode op)
-            {
-                var newOp = new TreeNode()
-                {
-                    IsRoot = false,
-                    IsWhite = IsWhite,
-                    move = Clone(op.move),
-                    NodeBoard = Clone(NodeBoard)
-                };
-
-                newOp.NodeBoard.PlayMove(op.move.pos.x, op.move.pos.y, IsWhite);
-
-                return newOp;
-
-            }
-            
-        }
 
         private Tuple<double, TreeNode> Alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
         {
-            
-            if ( depth == 0 || root.Final())
+
+            if (depth == 0 || root.Final())
                 return new Tuple<double, TreeNode>(root.Eval(), null);
 
-            var optVal = minOrMax*-int.MaxValue;
+            var optVal = minOrMax * -int.MaxValue;
             TreeNode optOp = null;
             foreach (var op in root.Ops())
             {
                 var newOp = root.Apply(op);
                 var val = Alphabeta(newOp, depth - 1, -minOrMax, optVal).Item1;
 
-                if (val*minOrMax > optVal*minOrMax)
+                if (val * minOrMax > optVal * minOrMax)
                 {
                     optVal = val;
                     optOp = op;
 
-
-                    if (optVal*minOrMax > parentValue*minOrMax)
-                          break;
+                    // J'ai enlever ça pour retirer les cut des branches, aka alphabeta si j'ai bien compris
+                    if (optVal * minOrMax > parentValue * minOrMax)
+                        break;
                 }
             }
 
-            return new Tuple<double, TreeNode>(optVal,optOp);
+            return new Tuple<double, TreeNode>(optVal, optOp);
         }
 
 
-        private static T Clone<T>(T source)
+        public static T Clone<T>(T source)
         {
             if (!typeof(T).IsSerializable)
             {
