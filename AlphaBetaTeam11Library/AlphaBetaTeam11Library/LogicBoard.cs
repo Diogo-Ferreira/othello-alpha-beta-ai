@@ -341,7 +341,7 @@ namespace AlphaBetaTeam11Library
                     // take-back later in the game
                     countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
                 }
-                var positionalGoodness = K3 * theMatrix[move.pos.y,move.pos.x];
+                //var positionalGoodness = K3 * theMatrix[move.pos.y,move.pos.x];
                 //Console.WriteLine(countGoodness + positionalGoodness);
                 //return new Random().NextDouble()*countGoodness + positionalGoodness + K2 * mobility;
                 //return (10 * parity) + (78.922 * genMobility) + (801.724* theMatrix[move.pos.y, move.pos.x]);
@@ -351,10 +351,10 @@ namespace AlphaBetaTeam11Library
             public bool Final()
             {
                 var possibleMoves = PossibleMoves(IsWhite).Count;
-                return NodeBoard.GetWhiteScore() + NodeBoard.GetBlackScore() >= NodeBoard.Board.Length;// &&  possibleMoves > 0;
+                return possibleMoves == 0;
             }
 
-            private List<Pawn> PossibleMoves(bool IsWhite)
+            public List<Pawn> PossibleMoves(bool IsWhite)
             {
                 var possiblePawns = new List<Pawn>();
 
