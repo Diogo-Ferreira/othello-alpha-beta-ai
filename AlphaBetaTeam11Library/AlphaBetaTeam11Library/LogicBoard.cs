@@ -307,11 +307,11 @@ namespace AlphaBetaTeam11Library
             };
             public double Eval()
             {
-                var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
-                var countGoodness = 0.0;
-                const int K1 = 100;
-                const int K2 = 100;
-                const int K3 = 8;
+                //var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
+                //var countGoodness = 0.0;
+                //const int K1 = 100;
+                //const int K2 = 100;
+                //const int K3 = 8;
 
                 var myMobility = PossibleMoves(IsWhite).Count;
                 var hisMobility = PossibleMoves(!IsWhite).Count;
@@ -326,20 +326,22 @@ namespace AlphaBetaTeam11Library
 
                 //double parity = 100 * (maxCoin - minCoin) / (minCoin + maxCoin);
                 var parity = 0;
+                var blackScore = NodeBoard.GetBlackScore();
+                var whiteScore = NodeBoard.GetWhiteScore();
                 try
                 {
 
                     parity = 100*
-                                 ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) -
-                                  (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()))
+                                 ((IsWhite ? whiteScore : blackScore) -
+                                  (IsWhite ? blackScore : whiteScore))
                                  /
-                                 ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) +
-                                  (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
+                                 ((IsWhite ? whiteScore : blackScore) +
+                                  (IsWhite ? blackScore : whiteScore));
                 }
                 catch (DivideByZeroException e)
                 {}
 
-                if (earlyGame)
+                /*if (earlyGame)
                 {
                     // give-away in the early game
                     countGoodness = K1 * ((IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()) - (IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()));
@@ -349,12 +351,12 @@ namespace AlphaBetaTeam11Library
                     // take-back later in the game
                     countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
                 }
-                var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);
+                var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);*/
                 //Console.WriteLine(countGoodness + positionalGoodness);
-                return new Random().Next(0, 100)*(move == null ? 0 : move.pos.x) +
-                       new Random().Next(0, 100)*(move == null ? 0 : move.pos.y);
+                //return new Random().Next(0, 100)*(move == null ? 0 : move.pos.x) +
+                //       new Random().Next(0, 100)*(move == null ? 0 : move.pos.y);
                 //return new Random().NextDouble()*countGoodness + positionalGoodness;
-                //return (10 * parity) + (78.922 * genMobility) + (move == null ? 0 : 801.724* theMatrix[move.pos.y, move.pos.x]);
+                return (10 * parity) + (78.922 * genMobility) + (move == null ? 0 : 801.724* theMatrix[move.pos.y, move.pos.x]);
                 //return ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
             }
 
@@ -395,34 +397,27 @@ namespace AlphaBetaTeam11Library
 
                 var possibleMoves = PossibleMoves(IsWhite);
 
-                var ops = new List<TreeNode>();
-
+                var ops = new TreeNode[possibleMoves.Count];
+                var i = 0;
                 possibleMoves.ForEach(p =>
                 {
-                    var newBoard = Clone(NodeBoard);
-                    //newBoard.PlayMove(p.pos.x, p.pos.y,IsWhite);
                     var treeNode = new TreeNode()
                     {
                         IsWhite = IsWhite,
                         move = p,
-                        NodeBoard = newBoard,
+                        NodeBoard = NodeBoard,
                         IsRoot = false
                     };
-                    ops.Add(treeNode);
+                    ops[i] = treeNode;
+                    i++;
                 });
 
-                return ops.ToArray();
+                return ops;
 
             }
 
             public TreeNode Apply(TreeNode op)
             {
-                /*move = op.move;
-                IsWhite = op.IsWhite;
-                IsRoot = false;
-                NodeBoard.PlayMove(move.pos.x, move.pos.y, IsWhite);
-                return this;*/
-
                 var newOp = new TreeNode()
                 {
                     IsRoot = false,
@@ -447,8 +442,7 @@ namespace AlphaBetaTeam11Library
 
             var optVal = minOrMax*-int.MaxValue;
             TreeNode optOp = null;
-            var ops = root.Ops();
-            foreach (var op in ops)
+            foreach (var op in root.Ops())
             {
                 var newOp = root.Apply(op);
                 var val = Alphabeta(newOp, depth - 1, -minOrMax, optVal).Item1;
