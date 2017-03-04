@@ -36,11 +36,11 @@ namespace AlphaBetaTeam11Library
             };
         public double Eval()
         {
-            //var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
-            //var countGoodness = 0.0;
-            //const int K1 = 100;
-            //const int K2 = 100;
-            //const int K3 = 8;
+            var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
+            var countGoodness = 0.0;
+            const int K1 = 2;
+            const int K2 = 2;
+            const int K3 = 4;
 
             var myMobility = PossibleMoves(IsWhite).Count;
             var hisMobility = PossibleMoves(!IsWhite).Count;
@@ -70,7 +70,7 @@ namespace AlphaBetaTeam11Library
                 
            
 
-            /*if (earlyGame)
+            if (earlyGame)
             {
                 // give-away in the early game
                 countGoodness = K1 * ((IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()) - (IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()));
@@ -80,12 +80,14 @@ namespace AlphaBetaTeam11Library
                 // take-back later in the game
                 countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
             }
-            var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);*/
+            var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);
             //Console.WriteLine(countGoodness + positionalGoodness);
             //return new Random().Next(0, 100)*(move == null ? 0 : move.pos.x) +
-            //       new Random().Next(0, 100)*(move == null ? 0 : move.pos.y);
-            //return new Random().NextDouble()*countGoodness + positionalGoodness;
-            return (10 * parity) + (78.922 * genMobility) + (move == null ? 0 : 801.724 * theMatrix[move.pos.y, move.pos.x]);
+              //     new Random().Next(0, 100)*(move == null ? 0 : move.pos.y);
+            //return new Random().NextDouble() * countGoodness + positionalGoodness;
+
+            var rnd = new Random().Next(0, 10) * (move == null ? 0 : move.pos.x) + new Random().Next(0, 10)*(move == null ? 0 : move.pos.y);
+            return ((10 * parity) + (78.922 * rnd * genMobility) + (move == null ? 0 : 801.724 * theMatrix[move.pos.y, move.pos.x]));
             //return ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
         }
 
@@ -151,9 +153,43 @@ namespace AlphaBetaTeam11Library
             {
                 IsRoot = false,
                 IsWhite = IsWhite,
-                move = LogicBoard.Clone(op.move),
-                NodeBoard = LogicBoard.Clone(NodeBoard)
+                move = new Pawn()
+                {
+                    pos = new Pawn.Direction()
+                    {
+                        x = op.move.pos.x,
+                        y = op.move.pos.y
+                    },
+                    color = op.move.color
+                },
+                NodeBoard = new LogicBoard()
             };
+
+            // TODO: create constructor for this
+            for (var i = 0; i < LogicBoard.HEIGHT; i++)
+            {
+                for (var j = 0; j < LogicBoard.WIDTH; j++)
+                {
+
+                    if (op.NodeBoard.Board[j, i] != null)
+                    {
+
+                        newOp.NodeBoard.Board[j, i] = new Pawn()
+                        {
+                            pos = new Pawn.Direction()
+                            {
+                                x = op.NodeBoard.Board[j, i].pos.x,
+                                y = op.NodeBoard.Board[j, i].pos.x
+                            },
+                            color = op.move.color
+                        };
+                    }
+                    else
+                    {
+                        newOp.NodeBoard.Board[j, i] = null;
+                    }
+                }
+            }
 
             newOp.NodeBoard.PlayMove(op.move.pos.x, op.move.pos.y, IsWhite);
 

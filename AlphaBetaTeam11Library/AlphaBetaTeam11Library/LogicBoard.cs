@@ -31,7 +31,7 @@ namespace AlphaBetaTeam11Library
         ///<summary>
         /// Board logic du jeu, si case vide null
         /// </summary>
-        private Pawn[,] Board { get; } = new Pawn[WIDTH, HEIGHT];
+        public Pawn[,] Board { get; set; } = new Pawn[WIDTH, HEIGHT];
 
         /// <summary>
         ///  Directions prédéfinis des recherches
@@ -276,6 +276,25 @@ namespace AlphaBetaTeam11Library
 
             return outBoard;
         }
+
+        /*private Tuple<double, TreeNode> Alphabeta2(TreeNode root, int depth, double alpha, double beta, bool maximizing)
+        {
+            if (depth == 0 || root.Final())
+                return new Tuple<double, TreeNode>(root.Eval(), null);
+
+
+
+            if (maximizing)
+            {
+                var v = -int.MaxValue;
+
+                foreach (var op in root.Ops())
+                {
+
+                }
+
+
+        }*/
 
 
         private Tuple<double, TreeNode> Alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
