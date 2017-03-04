@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace AlphaBetaTeam11Library
 {
@@ -56,9 +58,10 @@ namespace AlphaBetaTeam11Library
         /// <param name="x">col</param>
         /// <param name="y">row</param>
         /// <param name="color">couleur</param>
-        public void addPawn(int x, int y, Pawn.Colors color )
+        /// 
+        public void addPawn(int col, int line, Pawn.Colors color )
         {
-            Board[y,x] = new Pawn(color, x, y);
+            Board[col,line] = new Pawn(color, col, line);
         }
 
         /// <summary>
@@ -124,7 +127,7 @@ namespace AlphaBetaTeam11Library
                 }
                 else
                 {
-                    var currentPawn = Board[line, column];
+                    var currentPawn = Board[column, line];
 
                     if (currentPawn == null)
                     {
@@ -153,15 +156,15 @@ namespace AlphaBetaTeam11Library
             return hit;
         }
         
-        public bool IsPlayable(int line, int column, bool isWhite)
+        public bool IsPlayable(int column, int line, bool isWhite)
         {
             //Position empty ?
-            if (Board[line,column] != null)
+            if (Board[column, line] != null)
                 return false;
 
             var ourColor = isWhite ? Pawn.Colors.White : Pawn.Colors.Black;
 
-            var currentPawn = new Pawn.Direction(x: column, y: line);
+            var currentPawn = new Pawn.Direction() {x = column, y = line};
 
             var found = false;
 
@@ -176,7 +179,7 @@ namespace AlphaBetaTeam11Library
             return found;
         }
 
-        public bool PlayMove(int line, int column, bool isWhite)
+        public bool PlayMove(int column, int line, bool isWhite)
         {
             var color = isWhite ? Pawn.Colors.White : Pawn.Colors.Black;
 
@@ -228,49 +231,24 @@ namespace AlphaBetaTeam11Library
 
         public string GetName()
         {
-            return "Alpha Beta AI elle as dit patate ^^'";
+            return "Debrot_Ferreira";
         }
 
         public Tuple<int, int> GetNextMove(int[,] game, int level, bool whiteTurn)
         {
-            for (var i = 0; i < HEIGHT; i++)
-            {
-                for (var j = 0; j < WIDTH; j++)
-                {
-                    if (game[i, j] != -1)
-                    {
-                        var pawn = new Pawn
-                        {
-                            pos = new Pawn.Direction(j, i),
-                            color = game[i, j] == 0 ? Pawn.Colors.White : Pawn.Colors.Black
-                        };
-
-                        Board[i, j] = pawn;
-                    }
-                    else
-                    {
-                        Board[i, j] = null;
-                    }
-                }
-            }
 
             var root = new TreeNode()
             {
-                board = this,
-                IsWhite = whiteTurn
+                NodeBoard = Clone(this),
+                IsWhite = whiteTurn,
+                IsRoot = true
             };
 
-            var result = alphabeta(root, level, 1, -int.MaxValue);
+            var result = Alphabeta(root, level, 1, -int.MaxValue);
 
+            //Console.WriteLine(result.Item1);
 
-            if (result.Item2 != null)
-            {
-                return new Tuple<int, int>(result.Item2.pawn.pos.y, result.Item2.pawn.pos.x);
-            }
-            else
-            {
-                return new Tuple<int, int>(-1,-1);
-            }
+            return result.Item2 != null ? new Tuple<int, int>(result.Item2.move.pos.x, result.Item2.move.pos.y) : new Tuple<int, int>(-1,-1);
            
            
         }
@@ -283,7 +261,7 @@ namespace AlphaBetaTeam11Library
             {
                 for (var j = 0; j < WIDTH; j++)
                 {
-                    outBoard[i, j] = Board[i, j] == null ? -1 : Board[i, j].IsWhite ? 0 : 1;
+                    outBoard[j, i] = Board[j, i] == null ? -1 : Board[j, i].IsWhite ? 0 : 1;
                 }
             }
 
@@ -293,11 +271,12 @@ namespace AlphaBetaTeam11Library
 
         public class TreeNode
         {
-            public Pawn pawn;
-            public LogicBoard board;
+            public Pawn move;
+            public LogicBoard NodeBoard;
             public bool IsWhite;
+            public bool IsRoot = false;
 
-            public readonly int[,] theMatrix = {
+            /*readonly int[,] theMatrix = {
                 { 30, -25, 10, 5, 5, 10, -25, 30, },
                 {-25, -25,  1, 1, 1,  1, -25, -25,},
                 { 10,   1,  5, 2, 2,  5,   1,  10,},
@@ -306,65 +285,118 @@ namespace AlphaBetaTeam11Library
                 { 10,   1,  5, 2, 2,  5,   1,  10,},
                 {-25, -25,  1, 1, 1,  1, -25, -25,},
                 { 30, -25, 10, 5, 5, 10, -25,  30,}
-            };
+            };*/
 
+            readonly int[,] theMatrix = {
+                { 100, -10, 11, 6, 6, 11, -10, 100, },
+                {-10, -20,  1, 2, 2,  1, -20, -10,},
+                { 10,   1,  5, 4, 4,  5,   1,  10,},
+                {  6,   2,  4, 2, 2,  4,   2,   6,},
+                {  6,   2,  4, 2, 2,  4,   2,   6,},
+                { 10,   1,  5, 4, 4,  5,   1,  10,},
+                {-10, -20,  1, 2, 2,  1, -20, -10,},
+                { 100, -10, 11, 6, 6, 11, -10,  100,}
+            };
             public double Eval()
             {
-                var earlyGame = (board.GetBlackScore() + board.GetWhiteScore() < 40);
+                var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
                 var countGoodness = 0.0;
-                var K1 = 1;
-                var K2 = 1.5;
-                var K3 = 2;
+                const int K1 = 2;
+                const int K2 = 10;
+                const int K3 = 8;
+
+                var myMobility = PossibleMoves(IsWhite).Count;
+                var hisMobility = PossibleMoves(!IsWhite).Count;
+
+                var genMobility = 0;
+
+                try
+                {
+                    genMobility = 100*(myMobility - hisMobility)/(myMobility + hisMobility);
+                }
+                catch (DivideByZeroException e){}
+
+                //double parity = 100 * (maxCoin - minCoin) / (minCoin + maxCoin);
+                var parity = 0;
+                try
+                {
+
+                    parity = 100*
+                                 ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) -
+                                  (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()))
+                                 /
+                                 ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) +
+                                  (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
+                }
+                catch (DivideByZeroException e)
+                {}
+
                 if (earlyGame)
                 {
                     // give-away in the early game
-                    countGoodness = K1*((IsWhite ? board.GetBlackScore() : board.GetWhiteScore()) - (IsWhite ? board.GetWhiteScore() : board.GetBlackScore()));
+                    countGoodness = K1 * ((IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()) - (IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()));
                 }
                 else
                 {
                     // take-back later in the game
-                    countGoodness = K2 * ((IsWhite ? board.GetWhiteScore() : board.GetBlackScore()) - (IsWhite ? board.GetBlackScore() : board.GetWhiteScore()));
+                    countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
                 }
-                var positionalGoodness = K3 * theMatrix[pawn.pos.y,pawn.pos.x];
-
-                return countGoodness + positionalGoodness;
+                var positionalGoodness = K3 * theMatrix[move.pos.y,move.pos.x];
+                //Console.WriteLine(countGoodness + positionalGoodness);
+                //return new Random().NextDouble()*countGoodness + positionalGoodness + K2 * mobility;
+                //return (10 * parity) + (78.922 * genMobility) + (801.724* theMatrix[move.pos.y, move.pos.x]);
+                return ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
             }
 
             public bool Final()
             {
-                return board.GetWhiteScore() + board.GetBlackScore() > board.Board.Length;
+                var possibleMoves = PossibleMoves(IsWhite).Count;
+                return NodeBoard.GetWhiteScore() + NodeBoard.GetBlackScore() >= NodeBoard.Board.Length;// &&  possibleMoves > 0;
             }
 
-            public TreeNode[] Ops()
+            private List<Pawn> PossibleMoves(bool IsWhite)
             {
-
                 var possiblePawns = new List<Pawn>();
 
                 for (var i = 0; i < HEIGHT; i++)
                 {
                     for (var j = 0; j < WIDTH; j++)
                     {
-                        if (board.Board[i, j] == null && board.IsPlayable(j, i, IsWhite))
+                        if (NodeBoard.IsPlayable(j, i, IsWhite))
                         {
                             possiblePawns.Add(new Pawn()
                             {
-                                pos = new Pawn.Direction(j,i),
+                                pos = new Pawn.Direction
+                                {
+                                    x = j,
+                                    y = i
+                                },
                                 color = IsWhite ? Pawn.Colors.White : Pawn.Colors.Black
                             });
                         }
                     }
                 }
+                return possiblePawns;
+            }
 
+            public TreeNode[] Ops()
+            {
+
+
+                var possibleMoves = PossibleMoves(IsWhite);
 
                 var ops = new List<TreeNode>();
 
-                possiblePawns.ForEach(p =>
+                possibleMoves.ForEach(p =>
                 {
+                    var newBoard = Clone(NodeBoard);
+                    newBoard.PlayMove(p.pos.x, p.pos.y,IsWhite);
                     var treeNode = new TreeNode()
                     {
                         IsWhite = IsWhite,
-                        pawn = p,
-                        board = board
+                        move = p,
+                        NodeBoard = newBoard,
+                        IsRoot = false
                     };
                     ops.Add(treeNode);
                 });
@@ -375,25 +407,27 @@ namespace AlphaBetaTeam11Library
 
             public TreeNode Apply(TreeNode op)
             {
-                pawn = op.pawn;
+                move = op.move;
                 IsWhite = op.IsWhite;
-                return this;
+                IsRoot = false;
+                NodeBoard.PlayMove(move.pos.x, move.pos.y, IsWhite);
+                return this;  
             }
             
         }
 
-        public Tuple<double, TreeNode> alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
+        private Tuple<double, TreeNode> Alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
         {
-            if( depth == 0 || root.Final())
+            if ( depth == 0 || root.Final())
                 return new Tuple<double, TreeNode>(root.Eval(), null);
 
             var optVal = minOrMax*-int.MaxValue;
             TreeNode optOp = null;
-
             foreach (var op in root.Ops())
             {
                 var newOp = root.Apply(op);
-                var val = alphabeta(newOp, depth - 1, -minOrMax, optVal).Item1;
+                var val = Alphabeta(newOp, depth - 1, -minOrMax, optVal).Item1;
+                //Console.WriteLine(val);
                 if (val*minOrMax > optVal*minOrMax)
                 {
                     optVal = val;
@@ -406,5 +440,30 @@ namespace AlphaBetaTeam11Library
 
             return new Tuple<double, TreeNode>(optVal,optOp);
         }
+
+
+        private static T Clone<T>(T source)
+        {
+            if (!typeof(T).IsSerializable)
+            {
+                throw new ArgumentException("The type must be serializable.", "source");
+            }
+
+            // Don't serialize a null object, simply return the default for that object
+            if (ReferenceEquals(source, null))
+            {
+                return default(T);
+            }
+
+            IFormatter formatter = new BinaryFormatter();
+            Stream stream = new MemoryStream();
+            using (stream)
+            {
+                formatter.Serialize(stream, source);
+                stream.Seek(0, SeekOrigin.Begin);
+                return (T)formatter.Deserialize(stream);
+            }
+        }
     }
+    
 }
