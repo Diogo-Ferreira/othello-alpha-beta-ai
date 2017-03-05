@@ -22,14 +22,42 @@ namespace AlphaBetaTeam11Library
                 { 100, -10, 11, 6, 6, 11, -10,  100}
             };
 
-       
+
         /// <summary>
-        /// Evaluation du jeu basé sur une matrice
+        /// Evaluation du jeu basé sur une stratégie positionnel et d'évaporation
+        /// Sources :
+        ///  http://gamedev.stackexchange.com/questions/45173/reversi-othello-early-game-evaluation-function
+        ///  http://www.samsoft.org.uk/reversi/strategy.htm#evaporate
         /// </summary>
         /// <returns></returns>
         public double Eval()
         {
-            return  (move == null ? 0 :theMatrix[move.pos.y, move.pos.x]);
+            
+             //Le but est de laisser l'adversaire prendre plus de pions au début pour les renverser tous par la suite. 
+            var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
+            double countGoodness;
+
+            // Ces valeurs on étés définit par tatonnement après plusieurs essaies
+            const int K1 = 7;
+            const int K2 = 8;
+            const int K3 = 10;
+
+            if (earlyGame)
+            {
+                // on est au début du jeu, on laisse l'adversaire prendre plus de pions
+                countGoodness = K1 * ((IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()) - (IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()));
+            }
+            else
+            {
+                // A partir de maintenant, on fait le contraire, on essaie d'en flipper le plus possible
+                countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
+            }
+
+            // On tiens compte de l'apportance de la place grâce à une matrice
+            var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);
+
+            return countGoodness + positionalGoodness ;
+
         }
 
 
