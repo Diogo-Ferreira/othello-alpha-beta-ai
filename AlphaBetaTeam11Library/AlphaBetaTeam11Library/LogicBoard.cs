@@ -15,6 +15,10 @@ namespace AlphaBetaTeam11Library
 {
     /// <summary>
     /// Board logic du jeu, gère les règles du jeu et ainsi que le score
+    /// ATTENTION : L'IA est lente car le board est un board d'objet Pawn et non de int,
+    /// ce qui est plus lent à cloner et à convertir à chaque fois.
+    /// 
+    /// C'est une erreur de conception qui vient du projet précédent.
     /// </summary>
     [Serializable()]
      public class LogicBoard : IPlayable.IPlayable, ISerializable
@@ -54,6 +58,40 @@ namespace AlphaBetaTeam11Library
         public LogicBoard()
         {
             fillBoard();
+        }
+
+        /// <summary>
+        /// Créer un board suivant un noeud (Deep Copy)
+        /// </summary>
+        /// <param name="boardToCopy"></param>
+        public LogicBoard(TreeNode boardToCopy)
+        {
+            for(var i = 0; i < LogicBoard.HEIGHT; i++)
+            {
+                for (var j = 0; j < LogicBoard.WIDTH; j++)
+                {
+
+                    if (boardToCopy.NodeBoard.Board[j, i] != null)
+                    {
+
+                        var element = boardToCopy.NodeBoard.Board[j, i];
+
+                        Board[j, i] = new Pawn
+                        {
+                            pos = new Pawn.Direction
+                            {
+                                x = element.pos.x,
+                                y = element.pos.x
+                            },
+                            color = element.Color
+                        };
+                    }
+                    else
+                    {
+                        Board[j, i] = null;
+                    }
+                }
+            }
         }
 
 
@@ -242,6 +280,7 @@ namespace AlphaBetaTeam11Library
         public Tuple<int, int> GetNextMove(int[,] game, int level, bool whiteTurn)
         {
 
+            // On créer le premier noeud
             var root = new TreeNode()
             {
                 NodeBoard = Clone(this),
@@ -250,7 +289,7 @@ namespace AlphaBetaTeam11Library
             };
 
 
-            
+            // Algo 
             var result = Alphabeta(root, level, 1, int.MaxValue);
 
             if (result.Item2 != null)
@@ -264,6 +303,8 @@ namespace AlphaBetaTeam11Library
 
         public int[,] GetBoard()
         {
+
+            //Conversion du board en pawn en board de int
             var outBoard = new int[WIDTH, HEIGHT];
 
             for (var i = 0; i < HEIGHT; i++)
@@ -277,26 +318,15 @@ namespace AlphaBetaTeam11Library
             return outBoard;
         }
 
-        /*private Tuple<double, TreeNode> Alphabeta2(TreeNode root, int depth, double alpha, double beta, bool maximizing)
-        {
-            if (depth == 0 || root.Final())
-                return new Tuple<double, TreeNode>(root.Eval(), null);
 
-
-
-            if (maximizing)
-            {
-                var v = -int.MaxValue;
-
-                foreach (var op in root.Ops())
-                {
-
-                }
-
-
-        }*/
-
-
+        /// <summary>
+        /// Algo alphabeta
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="depth"></param>
+        /// <param name="minOrMax"></param>
+        /// <param name="parentValue"></param>
+        /// <returns></returns>
         private Tuple<double, TreeNode> Alphabeta(TreeNode root, int depth, double minOrMax, double parentValue)
         {
 
@@ -314,8 +344,7 @@ namespace AlphaBetaTeam11Library
                 {
                     optVal = val;
                     optOp = op;
-
-                    // J'ai enlever ça pour retirer les cut des branches, aka alphabeta si j'ai bien compris
+                    
                     if (optVal * minOrMax > parentValue * minOrMax)
                         break;
                 }
@@ -324,7 +353,12 @@ namespace AlphaBetaTeam11Library
             return new Tuple<double, TreeNode>(optVal, optOp);
         }
 
-
+        /// <summary>
+        /// Permet de cloner un objet, attention -->  lent !
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
         public static T Clone<T>(T source)
         {
             if (!typeof(T).IsSerializable)
