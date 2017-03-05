@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AlphaBetaTeam11Library
 {
@@ -11,7 +9,7 @@ namespace AlphaBetaTeam11Library
         public Pawn move;
         public LogicBoard NodeBoard;
         public bool IsWhite;
-        public bool IsRoot = false;
+        public bool IsRoot;
 
         /*readonly int[,] theMatrix = {
             { 30, -25, 10, 5, 5, 10, -25, 30, },
@@ -25,33 +23,35 @@ namespace AlphaBetaTeam11Library
         };*/
 
         readonly int[,] theMatrix = {
-                { 100, -10, 11, 6, 6, 11, -10, 100, },
-                {-10, -20,  1, 2, 2,  1, -20, -10,},
-                { 10,   1,  5, 4, 4,  5,   1,  10,},
-                {  6,   2,  4, 2, 2,  4,   2,   6,},
-                {  6,   2,  4, 2, 2,  4,   2,   6,},
-                { 10,   1,  5, 4, 4,  5,   1,  10,},
-                {-10, -20,  1, 2, 2,  1, -20, -10,},
-                { 100, -10, 11, 6, 6, 11, -10,  100,}
+                { 100, -10, 11, 6, 6, 11, -10, 100 },
+                {-10, -20,  1, 2, 2,  1, -20, -10},
+                { 10,   1,  5, 4, 4,  5,   1,  10},
+                {  6,   2,  4, 2, 2,  4,   2,   6},
+                {  6,   2,  4, 2, 2,  4,   2,   6},
+                { 10,   1,  5, 4, 4,  5,   1,  10},
+                {-10, -20,  1, 2, 2,  1, -20, -10},
+                { 100, -10, 11, 6, 6, 11, -10,  100}
             };
+
+        private readonly Tuple<int,int>[] importantCorners =
+        {
+            new Tuple<int, int>(0,0),
+            new Tuple<int, int>(0,7),
+            new Tuple<int, int>(7,0),
+            new Tuple<int, int>(7,7),
+        };
         public double Eval()
         {
-            var earlyGame = (NodeBoard.GetBlackScore() + NodeBoard.GetWhiteScore() < 40);
-            var countGoodness = 0.0;
-            const int K1 = 2;
-            const int K2 = 2;
-            const int K3 = 4;
 
+            // Mobility
             var myMobility = PossibleMoves(IsWhite).Count;
             var hisMobility = PossibleMoves(!IsWhite).Count;
-
             var genMobility = 0;
-
             if(myMobility + hisMobility != 0)
                 genMobility = 100 * (myMobility - hisMobility) / (myMobility + hisMobility);
      
-
-            //double parity = 100 * (maxCoin - minCoin) / (minCoin + maxCoin);
+            
+            // Parity
             var parity = 0;
             var blackScore = NodeBoard.GetBlackScore();
             var whiteScore = NodeBoard.GetWhiteScore();
@@ -68,27 +68,31 @@ namespace AlphaBetaTeam11Library
                              parityDenum;
             }
                 
+
+            //Important corner occupance
+            var myCorners = 0;
+            var hisCorners = 0;
+            foreach (var corner in importantCorners)
+            {
+                if (NodeBoard.Board[corner.Item1, corner.Item2] == null) break;
+
+                if (NodeBoard.Board[corner.Item1, corner.Item2].IsWhite == IsWhite)
+                {
+                    myCorners++;
+                }
+                else
+                {
+                    hisCorners++;
+                }
+
+            }
+
+            var cornerOccupance = 25*(myCorners - hisCorners);
            
+            //var rnd = new Random().Next(0, 10) * (move == null ? 0 : move.pos.x) + new Random().Next(0, 10)*(move == null ? 0 : move.pos.y);
 
-            if (earlyGame)
-            {
-                // give-away in the early game
-                countGoodness = K1 * ((IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()) - (IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()));
-            }
-            else
-            {
-                // take-back later in the game
-                countGoodness = K2 * ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
-            }
-            var positionalGoodness = K3 * (move == null ? 0 :theMatrix[move.pos.y,move.pos.x]);
-            //Console.WriteLine(countGoodness + positionalGoodness);
-            //return new Random().Next(0, 100)*(move == null ? 0 : move.pos.x) +
-              //     new Random().Next(0, 100)*(move == null ? 0 : move.pos.y);
-            //return new Random().NextDouble() * countGoodness + positionalGoodness;
 
-            var rnd = new Random().Next(0, 10) * (move == null ? 0 : move.pos.x) + new Random().Next(0, 10)*(move == null ? 0 : move.pos.y);
-            return ((10 * parity) + (78.922 * rnd * genMobility) + (move == null ? 0 : 801.724 * theMatrix[move.pos.y, move.pos.x]));
-            //return ((IsWhite ? NodeBoard.GetWhiteScore() : NodeBoard.GetBlackScore()) - (IsWhite ? NodeBoard.GetBlackScore() : NodeBoard.GetWhiteScore()));
+            return ((10 * parity) + (78.922 * genMobility) + (move == null ? 0 : 382.026 * theMatrix[move.pos.y, move.pos.x]) + (801.724 * cornerOccupance));
         }
 
         public bool Final()
@@ -107,7 +111,7 @@ namespace AlphaBetaTeam11Library
                 {
                     if (NodeBoard.IsPlayable(j, i, IsWhite))
                     {
-                        possiblePawns.Add(new Pawn()
+                        possiblePawns.Add(new Pawn
                         {
                             pos = new Pawn.Direction
                             {
@@ -132,7 +136,7 @@ namespace AlphaBetaTeam11Library
             var i = 0;
             possibleMoves.ForEach(p =>
             {
-                var treeNode = new TreeNode()
+                var treeNode = new TreeNode
                 {
                     IsWhite = IsWhite,
                     move = p,
@@ -149,13 +153,13 @@ namespace AlphaBetaTeam11Library
 
         public TreeNode Apply(TreeNode op)
         {
-            var newOp = new TreeNode()
+            var newOp = new TreeNode
             {
                 IsRoot = false,
                 IsWhite = IsWhite,
-                move = new Pawn()
+                move = new Pawn
                 {
-                    pos = new Pawn.Direction()
+                    pos = new Pawn.Direction
                     {
                         x = op.move.pos.x,
                         y = op.move.pos.y
@@ -174,9 +178,9 @@ namespace AlphaBetaTeam11Library
                     if (op.NodeBoard.Board[j, i] != null)
                     {
 
-                        newOp.NodeBoard.Board[j, i] = new Pawn()
+                        newOp.NodeBoard.Board[j, i] = new Pawn
                         {
-                            pos = new Pawn.Direction()
+                            pos = new Pawn.Direction
                             {
                                 x = op.NodeBoard.Board[j, i].pos.x,
                                 y = op.NodeBoard.Board[j, i].pos.x
